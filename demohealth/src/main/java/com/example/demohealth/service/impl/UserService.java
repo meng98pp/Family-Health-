@@ -24,4 +24,12 @@ public class UserService implements IUserService {
     public List<User> register_check(String username) {
         return userDao.findAllByUsername(username);
     }
+
+    /**
+     * 注册
+     */
+    @Override
+    public void register(User user){
+        userDao.save(user);
+    }
 }

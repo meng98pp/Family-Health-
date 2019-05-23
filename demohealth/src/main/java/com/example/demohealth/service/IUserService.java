@@ -8,4 +8,6 @@ public interface IUserService {
     public List<User> register_check(String username);
 
     public List<User> login(String username, String password);
+
+    public void register(User user) throws Exception;
 }
