@@ -7,7 +7,7 @@ import java.util.List;
 public interface IUserService {
     public List<User> register_check(String username);
 
-    public List<User> login(String username, String password);
+    public List<User> login(String username);
 
     public void register(User user) throws Exception;
 }

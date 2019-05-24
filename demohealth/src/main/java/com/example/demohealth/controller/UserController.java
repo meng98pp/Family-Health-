@@ -46,37 +46,51 @@ public class UserController {
         HttpSession sessoin = request.getSession();
         String username = request.getParameter("username");
         String password = request.getParameter("pwd");
-        boolean check;
-        if (userService.login(username, password).get(0) != null) {
-            check = true;
-        }else {
-            check = false;
+
+
+        if (!password.equals(userService.login(username).get(0).getPassword())) {
+            request.setAttribute("msg", "用户名或密码不正确！");
+            return "login";
+        } else {
+            sessoin.setAttribute("username", username);
+            sessoin.setAttribute("password", password);
+            /*
+             *  category 1:child
+             *           0:parent
+             * */
+            if (userService.login(username).get(0).getCategory().equals(1)) {
+                return "redirect:/healthConditionChild";  //跳到子女端的首页
+            } else {
+                return "redirect:/healthConditionParent";  //跳到父母端的首页
+            }
         }
+    }
+
 //        }else{
 //            request.setAttribute("msg", "用户不存在！");
 //            return "redirect:/login";
 //        }
 
-        if (check) {
-            sessoin.setAttribute("username", username);
-            sessoin.setAttribute("password", password);
-            /*
-            *  category 1:child
-            *           0:parent
-            * */
-            if (userService.login(username, password).get(0).getCategory().equals(1)){
-                return "redirect:/healthConditionChild";  //跳到子女端的首页
-            }else{
-                return "redirect:/healthConditionParent";  //跳到父母端的首页
-            }
+//        if (check) {
+//            sessoin.setAttribute("username", username);
+//            sessoin.setAttribute("password", password);
+//            /*
+//            *  category 1:child
+//            *           0:parent
+//            * */
+//            if (userService.login(username, password).get(0).getCategory().equals(1)){
+//                return "redirect:/healthConditionChild";  //跳到子女端的首页
+//            }else{
+//                return "redirect:/healthConditionParent";  //跳到父母端的首页
+//            }
 
-
-
-        } else {
-            request.setAttribute("msg", "用户名或密码不正确！");
-            return "redirect:/login";
-        }
-    }
+//
+//
+//        } else {
+//            request.setAttribute("msg", "用户名或密码不正确！");
+//            return "redirect:/login";
+//        }
+//    }
 
     /*
     *子女登录成功 跳转到子女端的首页

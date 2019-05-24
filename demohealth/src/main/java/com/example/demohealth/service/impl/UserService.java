@@ -16,8 +16,8 @@ public class UserService implements IUserService {
 
 
     @Override
-    public List<User> login(String username, String password) {
-        return userDao.findAllByUsernameAndPassword(username, password);
+    public List<User> login(String username) {
+        return userDao.findAllByUsername(username);
     }
 
     @Override
