@@ -10,4 +10,8 @@ public interface IUserService {
     public List<User> login(String username);
 
     public void register(User user) throws Exception;
+
+    public List<User> findId(String username);
+
+    public void save(User user);
 }

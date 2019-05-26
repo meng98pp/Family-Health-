@@ -32,4 +32,14 @@ public class UserService implements IUserService {
     public void register(User user){
         userDao.save(user);
     }
+
+    @Override
+    public List<User> findId(String username) {
+        return userDao.findAllByUsername(username);
+    }
+
+    @Override
+    public void save(User user) {
+        userDao.save(user);
+    }
 }
