@@ -1,10 +1,10 @@
 package com.example.demohealth.controller;
 
-import com.example.demohealth.dao.IUserDao;
+import com.example.demohealth.model.Connect;
 import com.example.demohealth.model.User;
+import com.example.demohealth.service.impl.ConnectService;
 import com.example.demohealth.service.impl.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,17 +12,17 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import java.util.Map;
 
 @org.springframework.stereotype.Controller
 public class UserController {
     @Autowired
     private final UserService userService;
+    private final ConnectService connectService;
 
     @Autowired
-    public UserController(UserService userService, IUserDao userDao) {
+    public UserController(UserService userService, ConnectService connectService) {
         this.userService = userService;
-//        this.userDao = userDao;
+        this.connectService = connectService;
     }
 
     /*
@@ -53,8 +53,12 @@ public class UserController {
             request.setAttribute("msg", "用户名或密码不正确！");
             return "login";
         } else {
-            sessoin.setAttribute("username", username);
+            User user=userService.findId(username).get(0);
+            sessoin.setAttribute("usernameTrue", username);  //真实登录进来的Username
             sessoin.setAttribute("password", password);
+            sessoin.setAttribute("telephoneTrue", user.getTelephone());
+            sessoin.setAttribute("addressTrue",user.getAddress());
+            sessoin.setAttribute("categorytrue",user.getCategory());
             /*
              *  category 1:child
              *           0:parent
@@ -112,18 +116,29 @@ public class UserController {
     /*
      * 注册新用户 （尚无对新用户信息的判定处理（如用户名不能重复））
      * */
-    @GetMapping(path="/doRegister")
-    public String doRegister(HttpServletRequest request,String username,String password,
-                             String telephone,String address,Integer category){
-            User user = new User();
-            user.setUsername(username);
-            user.setPassword(password);
-            user.setAddress(address);
-            user.setTelephone(telephone);
-            user.setCategory(category);
+    @PostMapping(path="/doRegister")
+    public String doRegister(HttpServletRequest request){
+        HttpSession sessoin = request.getSession();
+        String username = request.getParameter("username");
+        String password = request.getParameter("pwd");
+        String address = request.getParameter("address");
+        String telephone = request.getParameter("telephone");
+        String category = request.getParameter("category");
+        int cate;
+        if (category.equals("parent")){
+            cate=0;
+        }else{
+            cate=1;
+        }
+        User user = new User();
+        user.setUsername(username);
+        user.setPassword(password);
+        user.setAddress(address);
+        user.setTelephone(telephone);
+        user.setCategory(cate);
 
-            userService.save(user);
-            return "redirect:/login";
+        userService.save(user);
+        return "redirect:/login";
     }
 
     /*
@@ -149,21 +164,69 @@ public class UserController {
     }
 
     /*
-     * 显示用户信息    (Session共享还没有写)
+     * 显示用户信息(用户名 电话 住址 已有的联系)
      * */
     @GetMapping(path = "/showInfo")
-    public String showInfo(Map<String, Object> map){
+    public String showInfo(HttpServletRequest request){
 
-        map.put("username", "Hello, Spring Boot!");
+//        String username=request.getParameter("usernameTrue");
+//        User user=userService.findId(username).get(0);
+//
+//        //显示用户的用户名、电话、地址信息
+//        HttpSession sessoin = request.getSession();
+//        sessoin.setAttribute("telephoneTrue", user.getTelephone());
+//        sessoin.setAttribute("addressTrue",user.getAddress());
+        HttpSession sessoin = request.getSession();
+        String username = request.getParameter("usernameTrue");
+        int cate=Integer.parseInt(request.getParameter("categoryTrue"));
+        if (cate==1){  //子女
+            if (connectService.findByChild(username).get(0)!=null) {
+                String userConnect = connectService.findByChild(username).get(0).getUsernameParent();
+                sessoin.setAttribute("connectTrue",userConnect);
+            }else{
+                sessoin.setAttribute("connectTrue",null);
+            }
+        }else{
+            if (connectService.findByParent(username).get(0)!=null) {
+                String userConnect = connectService.findByParent(username).get(0).getUsernameChild();
+                sessoin.setAttribute("connectTrue",userConnect);
+            }else{
+                sessoin.setAttribute("connectTrue",null);
+            }
+        }
 
-        map.put("message2", "Hello, Spring Boot!");
-
-        User user = new User(18, "Bruce");
-
-        map.put("user", user);
-
-        return "userInfo";
-
+        return "showInfo";
     }
+
+
+    /*
+     * 显示用户信息(用户名 电话 住址 已有的联系)
+     * */
+    @GetMapping(path = "/addConnect")
+    public String addConnect(HttpServletRequest request){
+
+        HttpSession sessoin = request.getSession();
+        String usernameConnect = request.getParameter("addConnectName");  //新添加关联的用户名
+        String username=request.getParameter("usernameTrue");
+        int cate=Integer.parseInt(request.getParameter("categoryTrue"));
+        if (cate==1){  //子女
+            Connect connect=new Connect();
+            connect.setUsernameChild(username);
+            connect.setUsernameParent(usernameConnect);
+            connectService.save(connect);
+
+            sessoin.setAttribute("conncetTrue", usernameConnect);
+        }else{
+            Connect connect=new Connect();
+            connect.setUsernameChild(usernameConnect);
+            connect.setUsernameParent(username);
+            connectService.save(connect);
+
+            sessoin.setAttribute("conncetTrue", usernameConnect);
+        }
+
+        return "addConnect";
+    }
+
 
 }
